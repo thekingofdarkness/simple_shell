@@ -140,4 +140,3 @@ void fork_cmd(info_t *info)
 		wait_cmd_parent(info);
 	}
 }
-

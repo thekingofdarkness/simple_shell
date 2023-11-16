@@ -75,4 +75,3 @@ char *_strcat(char *dest, char *src)
 	*dest = *src; // Ensure the null terminator is added at the end.
 	return (ret);
 }
-

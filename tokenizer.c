@@ -111,4 +111,3 @@ char **strtow2(char *str, char d)
 
 	return (s);
 }
-
