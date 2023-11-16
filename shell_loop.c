@@ -1,11 +1,11 @@
 #include "shell.h"
 
 /**
- * hsh - Main shell loop.
- * @info: The parameter & return info struct.
- * @av: The argument vector from main().
+ * hsh - main shell loop
+ * @info: the parameter & return info struct
+ * @av: the argument vector from main()
  *
- * Return: 0 on success, 1 on error, or error code.
+ * Return: 0 on success, 1 on error, or error code
  */
 int hsh(info_t *info, char **av)
 {
@@ -44,13 +44,13 @@ int hsh(info_t *info, char **av)
 }
 
 /**
- * find_builtin - Finds a builtin command.
- * @info: The parameter & return info struct.
+ * find_builtin - finds a builtin command
+ * @info: the parameter & return info struct
  *
  * Return: -1 if builtin not found,
- *         0 if builtin executed successfully,
- *         1 if builtin found but not successful,
- *         -2 if builtin signals exit()
+ *			0 if builtin executed successfully,
+ *			1 if builtin found but not successful,
+ *			-2 if builtin signals exit()
  */
 int find_builtin(info_t *info)
 {
@@ -78,14 +78,15 @@ int find_builtin(info_t *info)
 }
 
 /**
- * find_cmd - Finds a command in PATH.
- * @info: The parameter & return info struct.
+ * find_cmd - finds a command in PATH
+ * @info: the parameter & return info struct
  *
- * Return: void.
+ * Return: void
  */
 void find_cmd(info_t *info)
 {
 	char *path = NULL;
+	int i, k;
 
 	info->path = info->argv[0];
 	if (info->linecount_flag == 1)
@@ -93,7 +94,10 @@ void find_cmd(info_t *info)
 		info->line_count++;
 		info->linecount_flag = 0;
 	}
-	if (count_non_delim_words(info->arg) == 0)
+	for (i = 0, k = 0; info->arg[i]; i++)
+		if (!is_delim(info->arg[i], " \t\n"))
+			k++;
+	if (!k)
 		return;
 
 	path = find_path(info, _getenv(info, "PATH="), info->argv[0]);
@@ -116,10 +120,10 @@ void find_cmd(info_t *info)
 }
 
 /**
- * fork_cmd - Forks an exec thread to run cmd.
- * @info: The parameter & return info struct.
+ * fork_cmd - forks a an exec thread to run cmd
+ * @info: the parameter & return info struct
  *
- * Return: void.
+ * Return: void
  */
 void fork_cmd(info_t *info)
 {
@@ -128,15 +132,29 @@ void fork_cmd(info_t *info)
 	child_pid = fork();
 	if (child_pid == -1)
 	{
+		/* TODO: PUT ERROR FUNCTION */
 		perror("Error:");
 		return;
 	}
 	if (child_pid == 0)
 	{
-		exec_cmd_child(info);
+		if (execve(info->path, info->argv, get_environ(info)) == -1)
+		{
+			free_info(info, 1);
+			if (errno == EACCES)
+				exit(126);
+			exit(1);
+		}
+		/* TODO: PUT ERROR FUNCTION */
 	}
 	else
 	{
-		wait_cmd_parent(info);
+		wait(&(info->status));
+		if (WIFEXITED(info->status))
+		{
+			info->status = WEXITSTATUS(info->status);
+			if (info->status == 126)
+				print_error(info, "Permission denied\n");
+		}
 	}
 }
