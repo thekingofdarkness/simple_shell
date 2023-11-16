@@ -11,4 +11,3 @@ print_message() {
 print_message
 
 exit 0
-
